@@ -1,20 +1,14 @@
-use super::{ IsPiece, PieceColour };
+use super::IsPieceVariant;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Recon {
-    colour: PieceColour,
-}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Recon {}
 
-impl IsPiece for Recon {
-    fn get_cost(&self) -> u8 {
+impl IsPieceVariant for Recon {
+    fn cost(&self) -> u8 {
         3
     }
 
-    fn get_power(&self) -> u8 {
+    fn power(&self) -> u8 {
         1
-    }
-
-    fn get_colour(&self) -> PieceColour {
-        self.colour
     }
 }
