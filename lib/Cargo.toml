@@ -1,0 +1,12 @@
+[package]
+name = "convoy"
+version = "0.0.0"
+description = "Game logic for Supply Line"
+publish.workspace = true
+license.workspace = true
+edition = "2024"
+
+[lints]
+workspace = true
+
+[dependencies]
