@@ -4,7 +4,6 @@ use crate::{ constants::{ BOARD_X, BOARD_Y }, coord::Coord, pieces::Piece };
 
 pub type Tile = Option<Piece>;
 
-/// Neighbours are orthogonal only
 #[derive(Clone, Debug, Default)]
 pub struct Board {
     tiles: [[Tile; BOARD_X as usize]; BOARD_Y as usize],
@@ -25,13 +24,14 @@ impl IndexMut<Coord> for Board {
 }
 
 impl Board {
+    /// Neighbours are orthogonal only
     #[must_use]
     pub fn get_neighbours(&self, Coord { rank, file }: Coord) -> Vec<Tile> {
         [
             Coord::new(rank + 1, file),
-            Coord::new(rank - 1, file),
+            Coord::new(rank.wrapping_sub(1), file),
             Coord::new(rank, file + 1),
-            Coord::new(rank, file - 1),
+            Coord::new(rank, file.wrapping_sub(1)),
         ]
             .iter()
             .filter_map(|coord| coord.map(|coord| self[coord]))
