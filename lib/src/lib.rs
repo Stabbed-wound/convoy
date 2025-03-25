@@ -9,10 +9,11 @@ use crate::pieces::PieceColour;
 use crate::player::Player;
 use board::Board;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Game {
     board: Board,
     players: [Player; 2],
+    cur_player: PieceColour,
 }
 
 impl Game {
@@ -26,6 +27,16 @@ impl Game {
         match colour {
             PieceColour::Black => &self.players[0],
             PieceColour::White => &self.players[1],
+        }
+    }
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        Self {
+            board: Board::default(),
+            players: Default::default(),
+            cur_player: PieceColour::White,
         }
     }
 }
