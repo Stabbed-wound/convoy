@@ -1,12 +1,11 @@
-use std::ops::{ Index, IndexMut };
+use std::ops::{Index, IndexMut};
 
-use crate::{ constants::{ BOARD_X, BOARD_Y }, coord::Coord, pieces::Piece };
-
-pub type Tile = Option<Piece>;
+use crate::tile::Tile;
+use crate::{constants::{BOARD_FILES, BOARD_RANKS}, coord::Coord};
 
 #[derive(Clone, Debug, Default)]
 pub struct Board {
-    tiles: [[Tile; BOARD_X as usize]; BOARD_Y as usize],
+    tiles: [[Tile; BOARD_FILES as usize]; BOARD_RANKS as usize],
 }
 
 impl Index<Coord> for Board {
