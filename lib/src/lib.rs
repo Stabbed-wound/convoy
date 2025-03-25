@@ -23,10 +23,18 @@ impl Game {
     }
 
     #[must_use]
-    pub const fn get_player(&self, colour: PieceColour) -> &Player {
-        match colour {
+    pub const fn cur_player(&self) -> &Player {
+        match self.cur_player {
             PieceColour::Black => &self.players[0],
             PieceColour::White => &self.players[1],
+        }
+    }
+
+    #[must_use]
+    pub const fn other_player(&self) -> &Player {
+        match self.cur_player {
+            PieceColour::Black => &self.players[1],
+            PieceColour::White => &self.players[0],
         }
     }
 }
@@ -42,10 +50,17 @@ impl Default for Game {
 }
 
 impl Game {
-    fn get_mut_player(&mut self, colour: PieceColour) -> &mut Player {
-        match colour {
+    fn mut_cur_player(&mut self) -> &mut Player {
+        match self.cur_player {
             PieceColour::Black => &mut self.players[0],
             PieceColour::White => &mut self.players[1],
+        }
+    }
+
+    fn mut_other_player(&mut self) -> &mut Player {
+        match self.cur_player {
+            PieceColour::Black => &mut self.players[1],
+            PieceColour::White => &mut self.players[0],
         }
     }
 }
