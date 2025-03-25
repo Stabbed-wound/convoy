@@ -21,6 +21,14 @@ impl Game {
     pub const fn board(&self) -> &Board {
         &self.board
     }
+    
+    #[must_use]
+    pub const fn player(&self, colour: PieceColour) -> &Player {
+        match colour {
+            PieceColour::Black => &self.players[0],
+            PieceColour::White => &self.players[1],
+        }
+    }
 
     #[must_use]
     pub const fn cur_player(&self) -> &Player {
@@ -50,14 +58,24 @@ impl Default for Game {
 }
 
 impl Game {
-    fn mut_cur_player(&mut self) -> &mut Player {
+    #[must_use]
+    const fn mut_player(&mut self, colour: PieceColour) -> &mut Player {
+        match colour {
+            PieceColour::Black => &mut self.players[0],
+            PieceColour::White => &mut self.players[1],
+        }
+    }
+
+    #[must_use]
+    const fn mut_cur_player(&mut self) -> &mut Player {
         match self.cur_player {
             PieceColour::Black => &mut self.players[0],
             PieceColour::White => &mut self.players[1],
         }
     }
 
-    fn mut_other_player(&mut self) -> &mut Player {
+    #[must_use]
+    const fn mut_other_player(&mut self) -> &mut Player {
         match self.cur_player {
             PieceColour::Black => &mut self.players[1],
             PieceColour::White => &mut self.players[0],
