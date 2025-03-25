@@ -1,11 +1,29 @@
+use std::array;
 use std::ops::{Index, IndexMut};
 
-use crate::tile::Tile;
-use crate::{constants::{BOARD_FILES, BOARD_RANKS}, coord::Coord};
+use crate::tile::{Tile, TileType};
+use crate::{
+    constants::{BOARD_FILES, BOARD_RANKS},
+    coord::Coord,
+};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Board {
     tiles: [[Tile; BOARD_FILES as usize]; BOARD_RANKS as usize],
+}
+
+impl Default for Board {
+    fn default() -> Self {
+        Self {
+            tiles: array::from_fn(|rank| {
+                if rank == 0 || rank == (BOARD_RANKS - 1) as usize {
+                    array::from_fn(|_| Tile::new(None, TileType::Supply))
+                } else {
+                    array::from_fn(|_| Tile::default())
+                }
+            }),
+        }
+    }
 }
 
 impl Index<Coord> for Board {
@@ -32,8 +50,8 @@ impl Board {
             Coord::new(rank, file + 1),
             Coord::new(rank, file.wrapping_sub(1)),
         ]
-            .iter()
-            .filter_map(|coord| coord.map(|coord| self[coord]))
-            .collect()
+        .iter()
+        .filter_map(|coord| coord.map(|coord| self[coord]))
+        .collect()
     }
 }

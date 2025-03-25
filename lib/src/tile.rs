@@ -11,13 +11,18 @@ pub enum TileType {
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Tile {
     piece: Option<Piece>,
-    r#type: TileType,
+    tile_type: TileType,
 }
 
 impl Tile {
     #[must_use]
+    pub const fn new(piece: Option<Piece>, tile_type: TileType) -> Self {
+        Self { piece, tile_type }
+    }
+
+    #[must_use]
     pub const fn has_supplies(&self) -> bool {
-        match self.r#type {
+        match self.tile_type {
             TileType::Town | TileType::Supply => true,
             TileType::Regular => false,
         }
@@ -25,7 +30,7 @@ impl Tile {
 
     #[must_use]
     pub const fn gives_income(&self) -> bool {
-        matches!(self.r#type, TileType::Town)
+        matches!(self.tile_type, TileType::Town)
     }
 
     #[must_use]
