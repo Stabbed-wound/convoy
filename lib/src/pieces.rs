@@ -9,7 +9,7 @@ use infantry::Infantry;
 use recon::Recon;
 use crate::{ coord::Coord, Game };
 
-pub trait IsPieceVariant: Copy + Debug {
+pub trait PieceVariant: Copy + Debug + Eq {
     fn cost(&self) -> u8;
     fn power(&self) -> u8;
     fn get_moves(&self, colour: PieceColour, pos: Coord, context: &Game) -> Vec<Coord>;
@@ -40,13 +40,13 @@ pub enum PieceType {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PieceVariant {
+pub enum Variants {
     Convoy(Convoy),
     Infantry(Infantry),
     Recon(Recon),
 }
 
-impl PieceVariant {
+impl Variants {
     #[must_use]
     pub fn new(r#type: PieceType) -> Self {
         match r#type {
@@ -57,7 +57,7 @@ impl PieceVariant {
     }
 }
 
-impl IsPieceVariant for PieceVariant {
+impl PieceVariant for Variants {
     fn cost(&self) -> u8 {
         match self {
             Self::Convoy(convoy) => convoy.cost(),
@@ -87,13 +87,13 @@ impl IsPieceVariant for PieceVariant {
 pub struct Piece {
     colour: PieceColour,
     r#type: PieceType,
-    variant: PieceVariant,
+    variant: Variants,
 }
 
 impl Piece {
     #[must_use]
     pub fn new(colour: PieceColour, r#type: PieceType) -> Self {
-        Self { colour, r#type, variant: PieceVariant::new(r#type) }
+        Self { colour, r#type, variant: Variants::new(r#type) }
     }
 
 	#[must_use]
@@ -107,16 +107,16 @@ impl Piece {
     }
 }
 
-impl IsPieceVariant for Piece {
+impl PieceVariant for Piece {
     fn cost(&self) -> u8 {
-        <PieceVariant as IsPieceVariant>::cost(&self.variant)
+        <Variants as PieceVariant>::cost(&self.variant)
     }
 
     fn power(&self) -> u8 {
-        <PieceVariant as IsPieceVariant>::power(&self.variant)
+        <Variants as PieceVariant>::power(&self.variant)
     }
 
     fn get_moves(&self, colour: PieceColour, pos: Coord, context: &Game) -> Vec<Coord> {
-        <PieceVariant as IsPieceVariant>::get_moves(&self.variant, colour, pos, context)
+        <Variants as PieceVariant>::get_moves(&self.variant, colour, pos, context)
     }
 }

@@ -1,11 +1,11 @@
 use crate::{ coord::Coord, Game };
 
-use super::{ PieceColour, IsPieceVariant };
+use super::{PieceColour, PieceVariant};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Recon {}
 
-impl IsPieceVariant for Recon {
+impl PieceVariant for Recon {
     fn cost(&self) -> u8 {
         3
     }
@@ -20,6 +20,6 @@ impl IsPieceVariant for Recon {
         Coord { rank: _, file: _ }: Coord,
         _context: &Game
     ) -> Vec<Coord> {
-        unimplemented!()
+        todo!()
     }
 }
