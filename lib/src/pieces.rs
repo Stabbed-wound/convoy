@@ -1,6 +1,6 @@
-pub mod convoy;
-pub mod infantry;
-pub mod recon;
+mod convoy;
+mod infantry;
+mod recon;
 
 use std::{ fmt::Debug, ops::Neg };
 
