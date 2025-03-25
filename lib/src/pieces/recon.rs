@@ -1,6 +1,4 @@
-use crate::{ coord::Coord, Game };
-
-use super::{PieceColour, PieceVariant};
+use super::{Coord, Debug, Game, PieceColour, PieceVariant};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Recon {}
@@ -18,7 +16,7 @@ impl PieceVariant for Recon {
         &self,
         _colour: PieceColour,
         Coord { rank: _, file: _ }: Coord,
-        _context: &Game
+        _context: &Game,
     ) -> Vec<Coord> {
         todo!()
     }
