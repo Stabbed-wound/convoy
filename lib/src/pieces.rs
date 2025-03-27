@@ -1,6 +1,6 @@
-use std::fmt::Debug;
-
 use crate::{board::Board, coord::Coord};
+use std::fmt::Debug;
+use std::ops::Deref;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PieceColour {
@@ -25,37 +25,66 @@ pub enum PieceType {
     Recon,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Piece {
-    pub piece_colour: PieceColour,
-    pub piece_type: PieceType,
-}
-
-impl Piece {
+impl PieceType {
     #[must_use]
     pub const fn cost(&self) -> u8 {
-        match self.piece_type {
-            PieceType::Convoy => 2,
-            PieceType::Infantry | PieceType::Recon => 3,
+        match self {
+            Self::Convoy => 2,
+            Self::Infantry | Self::Recon => 3,
         }
     }
 
     #[must_use]
     pub const fn power(&self) -> u8 {
-        match self.piece_type {
-            PieceType::Convoy => 0,
-            PieceType::Infantry => 2,
-            PieceType::Recon => 1,
+        match self {
+            Self::Convoy => 0,
+            Self::Infantry => 2,
+            Self::Recon => 1,
         }
     }
 
     #[must_use]
     pub const fn speed(&self) -> u8 {
-        match self.piece_type {
-            PieceType::Convoy => 3,
-            PieceType::Infantry => 2,
-            PieceType::Recon => 4,
+        match self {
+            Self::Convoy => 3,
+            Self::Infantry => 2,
+            Self::Recon => 4,
         }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Piece {
+    exhausted: bool,
+    pub piece_colour: PieceColour,
+    pub piece_type: PieceType,
+}
+
+impl Deref for Piece {
+    type Target = PieceType;
+
+    fn deref(&self) -> &Self::Target {
+        &self.piece_type
+    }
+}
+
+impl Piece {
+    #[must_use]
+    pub const fn new(piece_colour: PieceColour, piece_type: PieceType) -> Self {
+        Self {
+            exhausted: false,
+            piece_colour,
+            piece_type,
+        }
+    }
+
+    #[must_use]
+    pub const fn is_exhausted(&self) -> bool {
+        self.exhausted
+    }
+
+    pub const fn toggle_exhaust(&mut self) {
+        self.exhausted = !self.exhausted;
     }
 
     #[must_use]
