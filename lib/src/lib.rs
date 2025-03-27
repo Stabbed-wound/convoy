@@ -81,4 +81,12 @@ impl Game {
             PieceColour::White => &mut self.players[0],
         }
     }
+    
+    const fn end_turn(&mut self) {
+        self.cur_player = match self.cur_player {
+            PieceColour::Black => PieceColour::White,
+            PieceColour::White => PieceColour::Black,
+        };
+        self.mut_cur_player().money += self.cur_player().income;
+    }
 }
