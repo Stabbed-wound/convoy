@@ -50,7 +50,7 @@ impl Board {
             Coord::new(rank, file + 1),
             Coord::new(rank, file.wrapping_sub(1)),
         ]
-        .iter()
+        .into_iter()
         .filter_map(|coord| coord.map(|coord| self[coord]))
         .collect()
     }

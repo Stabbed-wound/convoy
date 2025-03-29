@@ -83,7 +83,7 @@ impl Piece {
     #[must_use]
     pub const fn new(piece_colour: PieceColour, piece_type: PieceType) -> Self {
         Self {
-            exhausted: false,
+            exhausted: true,
             piece_colour,
             piece_type,
         }
