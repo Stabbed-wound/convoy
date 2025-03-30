@@ -1,4 +1,5 @@
-use crate::constants::{BOARD_FILES, BOARD_RANKS};
+use crate::constants::{BOARD_FILES, BOARD_RANKS, RANK_LETTERS};
+use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Coord {
@@ -14,5 +15,24 @@ impl Coord {
         }
 
         Some(Self { rank, file })
+    }
+
+    #[must_use]
+    pub const fn distance(&self, other: Self) -> u8 {
+        self.rank.abs_diff(other.rank) + self.file.abs_diff(other.file)
+    }
+}
+
+impl Display for Coord {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}{}",
+            RANK_LETTERS
+                .chars()
+                .nth(self.rank as usize)
+                .expect("Is within bounds"),
+            self.file
+        )
     }
 }
