@@ -99,8 +99,8 @@ impl Piece {
         self.exhausted
     }
 
-    pub const fn toggle_exhaust(&mut self) {
-        self.exhausted = !self.exhausted;
+    pub const fn set_exhaust(&mut self, state: bool) {
+        self.exhausted = state;
     }
 
     #[must_use]
