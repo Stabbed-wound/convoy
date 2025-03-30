@@ -41,7 +41,10 @@ impl Default for Board {
         Self {
             tiles: array::from_fn(|rank| {
                 if rank == 0 || rank == (BOARD_RANKS - 1) as usize {
-                    array::from_fn(|_| Tile::new(None, TileType::Baseline))
+                    array::from_fn(|_| Tile {
+                        piece_option: None,
+                        tile_type: TileType::Baseline,
+                    })
                 } else {
                     array::from_fn(|_| Tile::default())
                 }

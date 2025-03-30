@@ -2,18 +2,48 @@ pub mod board;
 pub mod constants;
 pub mod coord;
 pub mod pieces;
-pub mod player;
 pub mod tile;
 
-use crate::pieces::PieceColour;
-use crate::player::Player;
 use board::Board;
+use coord::{Coord, Move};
+use pieces::{Piece, PieceType};
+use std::ops::Index;
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+pub enum Player {
+    #[default]
+    P1,
+    P2,
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub enum Command {
+    Purchase(PieceType, Coord),
+    Move(Move),
+    Battle {
+        attacker_moves: Vec<Move>,
+        defenders: Vec<Coord>,
+        target: Coord,
+    },
+    #[default]
+    EndTurn,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum CommandError {
+    #[expect(
+        dead_code,
+        reason = "Generic error should be removed when all uses are replaced"
+    )]
+    #[error("Generic error")]
+    Error,
+}
+
+#[derive(Clone, Debug, Default)]
 pub struct Game {
     board: Board,
-    players: [Player; 2],
-    cur_player: PieceColour,
+    player_money: [u8; 2],
+    cur_player: Player,
 }
 
 impl Game {
@@ -21,69 +51,114 @@ impl Game {
     pub const fn board(&self) -> &Board {
         &self.board
     }
-    
-    #[must_use]
-    pub const fn player(&self, colour: PieceColour) -> &Player {
-        match colour {
-            PieceColour::Black => &self.players[0],
-            PieceColour::White => &self.players[1],
+
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `command`:
+    ///
+    /// returns: Result<(), `CommandError`>
+    ///
+    /// # Errors
+    ///
+    /// Will return Err if `command` is not possible
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// ```
+    pub fn do_command(&mut self, command: Command) -> Result<(), CommandError> {
+        match command {
+            Command::Purchase(piece_type, coord) => self.do_purchase(piece_type, coord),
+            Command::Move(Move { from, to }) => self.do_move(from, to),
+            Command::Battle { attacker_moves, defenders, target } => self.do_battle(attacker_moves, defenders, target),
+            Command::EndTurn => {
+                self.do_resupply();
+                self.do_upkeep();
+                Ok(())
+            }
         }
     }
 
-    #[must_use]
-    pub const fn cur_player(&self) -> &Player {
-        match self.cur_player {
-            PieceColour::Black => &self.players[0],
-            PieceColour::White => &self.players[1],
+    fn do_purchase(&mut self, piece_type: PieceType, coord: Coord) -> Result<(), CommandError> {
+        if piece_type.cost() > self[self.cur_player] {
+            return Err(CommandError::Error);
         }
+
+        if !self.board[coord].produces_troops() {
+            return Err(CommandError::Error);
+        }
+
+        if self.board[coord].piece_option.is_some() {
+            return Err(CommandError::Error);
+        }
+
+        *self.index_mut(self.cur_player) -= piece_type.cost();
+        self.board[coord].piece_option = Some(Piece::new(self.cur_player, piece_type));
+
+        Ok(())
     }
 
-    #[must_use]
-    pub const fn other_player(&self) -> &Player {
-        match self.cur_player {
-            PieceColour::Black => &self.players[1],
-            PieceColour::White => &self.players[0],
-        }
+    fn do_move(&mut self, _from: Coord, _to: Coord) -> Result<(), CommandError> {
+        todo!()
+    }
+
+    fn do_battle(&mut self, _attacker_moves: Vec<Move>, _defenders: Vec<Coord>, _target: Coord) -> Result<(), CommandError> {
+        todo!()
+    }
+
+    fn do_upkeep(&mut self) {
+        *self.index_mut(self.cur_player) = self
+            .board
+            .iter()
+            .filter(|tile| {
+                tile.piece_option.is_some_and(|piece| {
+                    piece.piece_type == PieceType::Convoy && tile.gives_income()
+                })
+            })
+            .count()
+            .try_into()
+            .expect("There are no more than 256 towns");
+
+        self.board
+            .iter_mut()
+            .filter_map(|tile| tile.piece_option.as_mut())
+            .for_each(|piece| {
+                if piece.owner == self.cur_player {
+                    piece.exhausted = false;
+                }
+            });
+    }
+
+    fn do_resupply(&mut self) {
+        /* get log_net placeholder */
+        let () = ();
+
+        self.cur_player = match self.cur_player {
+            Player::P1 => Player::P1,
+            Player::P2 => Player::P2,
+        };
     }
 }
 
-impl Default for Game {
-    fn default() -> Self {
-        Self {
-            board: Board::default(),
-            players: Default::default(),
-            cur_player: PieceColour::White,
+impl Index<Player> for Game {
+    type Output = u8;
+
+    fn index(&self, index: Player) -> &Self::Output {
+        match index {
+            Player::P1 => &self.player_money[0],
+            Player::P2 => &self.player_money[1],
         }
     }
 }
 
 impl Game {
-    #[must_use]
-    const fn mut_player(&mut self, colour: PieceColour) -> &mut Player {
-        match colour {
-            PieceColour::Black => &mut self.players[0],
-            PieceColour::White => &mut self.players[1],
+    const fn index_mut(&mut self, index: Player) -> &mut <Self as Index<Player>>::Output {
+        match index {
+            Player::P1 => &mut self.player_money[0],
+            Player::P2 => &mut self.player_money[1],
         }
-    }
-
-    #[must_use]
-    const fn mut_cur_player(&mut self) -> &mut Player {
-        match self.cur_player {
-            PieceColour::Black => &mut self.players[0],
-            PieceColour::White => &mut self.players[1],
-        }
-    }
-
-    #[must_use]
-    const fn mut_other_player(&mut self) -> &mut Player {
-        match self.cur_player {
-            PieceColour::Black => &mut self.players[1],
-            PieceColour::White => &mut self.players[0],
-        }
-    }
-    
-    const fn end_turn(&mut self) {
-        self.cur_player = self.cur_player.opposite();
-        self.mut_cur_player().money += self.cur_player().income;
     }
 }

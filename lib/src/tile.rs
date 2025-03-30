@@ -22,7 +22,7 @@ impl TileType {
     pub const fn gives_income(self) -> bool {
         matches!(self, Self::Town)
     }
-    
+
     #[must_use]
     pub const fn produces_troops(self) -> bool {
         matches!(self, Self::Baseline)

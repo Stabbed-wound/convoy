@@ -36,3 +36,9 @@ impl Display for Coord {
         )
     }
 }
+
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+pub struct Move {
+    pub from: Coord,
+    pub to: Coord,
+}

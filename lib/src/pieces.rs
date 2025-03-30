@@ -1,22 +1,6 @@
-use crate::{board::Board, coord::Coord};
+use crate::{board::Board, coord::Coord, Player};
 use std::fmt::Debug;
 use std::ops::{Deref, RangeInclusive};
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PieceColour {
-    Black,
-    White,
-}
-
-impl PieceColour {
-    #[must_use]
-    pub const fn opposite(self) -> Self {
-        match self {
-            Self::Black => Self::White,
-            Self::White => Self::Black,
-        }
-    }
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PieceType {
@@ -66,8 +50,8 @@ impl PieceType {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Piece {
+    pub owner: Player,
     pub exhausted: bool,
-    pub piece_colour: PieceColour,
     pub piece_type: PieceType,
 }
 
@@ -81,10 +65,10 @@ impl Deref for Piece {
 
 impl Piece {
     #[must_use]
-    pub const fn new(piece_colour: PieceColour, piece_type: PieceType) -> Self {
+    pub const fn new(owner: Player, piece_type: PieceType) -> Self {
         Self {
+            owner,
             exhausted: true,
-            piece_colour,
             piece_type,
         }
     }
