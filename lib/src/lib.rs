@@ -73,7 +73,11 @@ impl Game {
         match command {
             Command::Purchase(piece_type, coord) => self.do_purchase(piece_type, coord),
             Command::Move(Move { from, to }) => self.do_move(from, to),
-            Command::Battle { attacker_moves, defenders, target } => self.do_battle(attacker_moves, defenders, target),
+            Command::Battle {
+                attacker_moves,
+                defenders,
+                target,
+            } => self.do_battle(attacker_moves, defenders, target),
             Command::EndTurn => {
                 self.do_resupply();
                 self.do_upkeep();
@@ -101,11 +105,25 @@ impl Game {
         Ok(())
     }
 
-    fn do_move(&mut self, _from: Coord, _to: Coord) -> Result<(), CommandError> {
-        todo!()
+    fn do_move(&mut self, from: Coord, to: Coord) -> Result<(), CommandError> {
+        let piece = self.board[from].piece_option.ok_or(CommandError::Error)?;
+
+        if !piece.get_moves(from, &self.board).contains(&to) {
+            return Err(CommandError::Error);
+        }
+
+        self.board[from].piece_option = None;
+        self.board[to].piece_option = Some(piece);
+
+        Ok(())
     }
 
-    fn do_battle(&mut self, _attacker_moves: Vec<Move>, _defenders: Vec<Coord>, _target: Coord) -> Result<(), CommandError> {
+    fn do_battle(
+        &mut self,
+        _attacker_moves: Vec<Move>,
+        _defenders: Vec<Coord>,
+        _target: Coord,
+    ) -> Result<(), CommandError> {
         todo!()
     }
 

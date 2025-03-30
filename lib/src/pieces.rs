@@ -74,7 +74,7 @@ impl Piece {
     }
 
     #[must_use]
-    pub const fn get_moves(&self, Coord { rank: _, file: _ }: Coord, _board: Board) -> Vec<Coord> {
+    pub const fn get_moves(&self, Coord { rank: _, file: _ }: Coord, _board: &Board) -> Vec<Coord> {
         todo!()
     }
 }
