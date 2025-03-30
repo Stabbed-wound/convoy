@@ -66,9 +66,9 @@ impl PieceType {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Piece {
-    exhausted: bool,
-    piece_colour: PieceColour,
-    piece_type: PieceType,
+    pub exhausted: bool,
+    pub piece_colour: PieceColour,
+    pub piece_type: PieceType,
 }
 
 impl Deref for Piece {
@@ -87,20 +87,6 @@ impl Piece {
             piece_colour,
             piece_type,
         }
-    }
-
-    #[must_use]
-    pub const fn colour(&self) -> PieceColour {
-        self.piece_colour
-    }
-
-    #[must_use]
-    pub const fn is_exhausted(&self) -> bool {
-        self.exhausted
-    }
-
-    pub const fn set_exhaust(&mut self, state: bool) {
-        self.exhausted = state;
     }
 
     #[must_use]
