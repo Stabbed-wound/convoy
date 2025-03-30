@@ -56,4 +56,9 @@ impl Tile {
     pub const fn piece(&self) -> Option<&Piece> {
         self.piece_option.as_ref()
     }
+    
+    #[must_use]
+    pub const fn piece_mut(&mut self) -> Option<&mut Piece> {
+        self.piece_option.as_mut()
+    }
 }
