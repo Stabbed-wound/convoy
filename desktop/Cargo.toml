@@ -1,0 +1,12 @@
+[package]
+name = "desktop"
+version = "0.0.0"
+edition = "2024"
+publish.workspace = true
+license.workspace = true
+readme.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true
