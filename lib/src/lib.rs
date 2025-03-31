@@ -16,13 +16,25 @@ pub enum Player {
     P2,
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum AttackAction {
+    Attack(Coord),
+    MoveAttack(Move),
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum DefenseAction {
+    Defend(Coord),
+    Retreat(Move),
+}
+
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub enum Command {
     Purchase(PieceType, Coord),
     Move(Move),
     Battle {
-        attacker_moves: Vec<Move>,
-        defenders: Vec<Coord>,
+        attack_actions: Vec<AttackAction>,
+        defense_actions: Vec<DefenseAction>,
         target: Coord,
     },
     #[default]
@@ -72,12 +84,12 @@ impl Game {
     pub fn do_command(&mut self, command: Command) -> Result<(), CommandError> {
         match command {
             Command::Purchase(piece_type, coord) => self.do_purchase(piece_type, coord),
-            Command::Move(Move { from, to }) => self.do_move(from, to),
+            Command::Move(r#move) => self.do_move(r#move),
             Command::Battle {
-                attacker_moves,
-                defenders,
+                attack_actions,
+                defense_actions,
                 target,
-            } => self.do_battle(attacker_moves, defenders, target),
+            } => self.do_battle(attack_actions, defense_actions, target),
             Command::EndTurn => {
                 self.do_resupply();
                 self.do_upkeep();
@@ -105,7 +117,7 @@ impl Game {
         Ok(())
     }
 
-    fn do_move(&mut self, from: Coord, to: Coord) -> Result<(), CommandError> {
+    fn do_move(&mut self, Move { from, to }: Move) -> Result<(), CommandError> {
         let piece = self.board[from].piece_option.ok_or(CommandError::Error)?;
 
         if !piece.get_moves(from, &self.board).contains(&to) {
@@ -123,8 +135,8 @@ impl Game {
     #[allow(clippy::needless_pass_by_ref_mut)]
     fn do_battle(
         &mut self,
-        _attacker_moves: Vec<Move>,
-        _defenders: Vec<Coord>,
+        _attack_actions: Vec<AttackAction>,
+        _defense_actions: Vec<DefenseAction>,
         _target: Coord,
     ) -> Result<(), CommandError> {
         Ok(())
