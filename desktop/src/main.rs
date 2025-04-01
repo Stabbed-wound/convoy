@@ -1,20 +1,21 @@
 mod game;
 
-use iced::widget::column;
+use iced::alignment::Horizontal;
+use iced::widget::{column, container, text};
 use iced::window::Position;
-use iced::{application, window, Element, Size};
+use iced::{application, color, window, Element, Fill, Point, Shrink, Size};
 
 fn main() -> iced::Result {
     application("Convoy", App::update, App::view)
         .window(window::Settings {
             size: Size {
-                width: 960f32,
-                height: 540f32,
+                width: 1200f32,
+                height: 675f32,
             },
             position: Position::Centered,
             min_size: Some(Size {
-                width: 480f32,
-                height: 270f32,
+                width: 1200f32,
+                height: 675f32,
             }),
             ..window::Settings::default()
         })
@@ -27,18 +28,31 @@ struct App {
 }
 
 #[derive(Debug)]
-enum Message {
-    GameMessage(game::Message),
+enum AppMessage {
+    Game(game::Message),
 }
 
 impl App {
-    pub fn update(&mut self, message: Message) {
+    pub fn update(&mut self, message: AppMessage) {
         match message {
-            Message::GameMessage(message) => self.game.update(message),
+            AppMessage::Game(message) => self.game.update(message),
         }
     }
 
-    pub fn view(&self) -> Element<Message> {
-        column!["App", self.game.view().map(Message::GameMessage)].into()
+    pub fn view(&self) -> Element<AppMessage> {
+        Element::<AppMessage>::from(
+            column![
+                text("App").size(25),
+                container(self.game.view().map(AppMessage::Game))
+                    .center_y(Fill)
+                    .center_x(Shrink)
+            ]
+            .padding([10, 0])
+            .spacing(10)
+            .align_x(Horizontal::Center)
+            .height(Fill)
+            .width(Fill),
+        )
+        .explain(color!(0x77_77_77))
     }
 }
