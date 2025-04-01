@@ -34,6 +34,10 @@ impl Board {
     pub fn iter_mut(&mut self) -> slice::IterMut<Tile> {
         self.into_iter()
     }
+
+    pub fn rows(&self) -> impl Iterator<Item = &[Tile]> {
+        self.tiles.iter().map(<[Tile; 8]>::as_slice)
+    }
 }
 
 impl Default for Board {
