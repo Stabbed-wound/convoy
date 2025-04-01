@@ -7,6 +7,8 @@ license.workspace = true
 readme.workspace = true
 
 [dependencies]
+iced = { version = "0.13.1", features = ["default", "image"]  }
+convoy = {path = "../lib"}
 
 [lints]
 workspace = true
