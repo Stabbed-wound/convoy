@@ -175,8 +175,8 @@ impl Game {
         let () = ();
 
         self.cur_player = match self.cur_player {
-            Player::P1 => Player::P1,
-            Player::P2 => Player::P2,
+            Player::P1 => Player::P2,
+            Player::P2 => Player::P1,
         };
     }
 }

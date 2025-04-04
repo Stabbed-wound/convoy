@@ -3,7 +3,7 @@ mod game;
 use iced::alignment::Horizontal;
 use iced::widget::{column, container, text};
 use iced::window::Position;
-use iced::{application, color, window, Element, Fill, Point, Shrink, Size};
+use iced::{application, color, window, Element, Fill, Shrink, Size};
 
 fn main() -> iced::Result {
     application("Convoy", App::update, App::view)
@@ -42,7 +42,7 @@ impl App {
     pub fn view(&self) -> Element<AppMessage> {
         Element::<AppMessage>::from(
             column![
-                text("App").size(25),
+                text("App").size(20),
                 container(self.game.view().map(AppMessage::Game))
                     .center_y(Fill)
                     .center_x(Shrink)
@@ -53,6 +53,6 @@ impl App {
             .height(Fill)
             .width(Fill),
         )
-        .explain(color!(0x77_77_77))
+        // .explain(color!(0x77_77_77))
     }
 }
