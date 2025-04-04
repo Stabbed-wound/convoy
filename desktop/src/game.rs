@@ -131,6 +131,7 @@ fn view_board(board: &Board, selected_tile: Option<Coord>) -> Element<Message> {
 }
 
 fn view_tile(tile: Tile, light: bool, selected: bool) -> Element<'static, ()> {
+    let button_size = 30;
     let background = color!(match (light, selected) {
         (_, true) => 0xba_ca_44,
         (true, _) => 0xee_ee_d2,
@@ -140,8 +141,8 @@ fn view_tile(tile: Tile, light: bool, selected: bool) -> Element<'static, ()> {
 
     button("")
         .on_press_maybe(tile.piece_option.map(|_| ()))
-        .width(40)
-        .height(40)
+        .width(button_size)
+        .height(button_size)
         .style(move |_, _| button::Style {
             background: Some(background),
             ..button::Style::default()

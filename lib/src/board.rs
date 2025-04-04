@@ -36,7 +36,9 @@ impl Board {
     }
 
     pub fn rows(&self) -> impl Iterator<Item = &[Tile]> {
-        self.tiles.iter().map(<[Tile; 8]>::as_slice)
+        self.tiles
+            .iter()
+            .map(<[Tile; BOARD_FILES as usize]>::as_slice)
     }
 }
 

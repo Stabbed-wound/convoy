@@ -13,13 +13,13 @@ fn main() -> iced::Result {
     application("Convoy", App::update, App::view)
         .window(window::Settings {
             size: Size {
-                width: 600f32,
-                height: 675f32,
+                width: 700f32,
+                height: 700f32,
             },
             position: Position::Centered,
             min_size: Some(Size {
-                width: 600f32,
-                height: 675f32,
+                width: 700f32,
+                height: 700f32,
             }),
             ..window::Settings::default()
         })
