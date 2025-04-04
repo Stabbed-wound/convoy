@@ -1,20 +1,24 @@
 mod game;
 
-use iced::alignment::Horizontal;
-use iced::widget::{column, container, text};
-use iced::window::Position;
-use iced::{application, color, window, Element, Fill, Shrink, Size};
+use iced::{
+    alignment::Horizontal, application, widget::{column, container, text}, window,
+    window::Position,
+    Element,
+    Fill,
+    Shrink,
+    Size,
+};
 
 fn main() -> iced::Result {
     application("Convoy", App::update, App::view)
         .window(window::Settings {
             size: Size {
-                width: 1200f32,
+                width: 600f32,
                 height: 675f32,
             },
             position: Position::Centered,
             min_size: Some(Size {
-                width: 1200f32,
+                width: 600f32,
                 height: 675f32,
             }),
             ..window::Settings::default()
@@ -53,6 +57,6 @@ impl App {
             .height(Fill)
             .width(Fill),
         )
-        // .explain(color!(0x77_77_77))
+        // .explain(iced::color!(0x77_77_77))
     }
 }
