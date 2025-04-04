@@ -116,32 +116,37 @@ impl State {
 
 fn view_board(board: &Board, selected_tile: Option<Coord>) -> Element<Message> {
     let tile_row = |(row_index, tile_row): (usize, &[Tile])| {
-        let tile = |(col_index, tile)| {
-            let background = color!(match (
+        row(tile_row.iter().enumerate().map(|(col_index, tile)| {
+            view_tile(
+                *tile,
                 (row_index + col_index) % 2 == 0,
-                selected_tile == Coord::new(row_index, col_index)
-            ) {
-                (_, true) => 0xba_ca_44,
-                (true, _) => 0xee_ee_d2,
-                (false, _) => 0x76_96_56,
-            })
-            .into();
-
-            button("")
-                .on_press(Message::TileClicked(row_index, col_index))
-                .width(40)
-                .height(40)
-                .style(move |_, _| button::Style {
-                    background: Some(background),
-                    ..button::Style::default()
-                })
-                .into()
-        };
-
-        row(tile_row.iter().enumerate().map(tile)).into()
+                selected_tile == Coord::new(row_index, col_index),
+            )
+            .map(move |()| Message::TileClicked(row_index, col_index))
+        }))
+        .into()
     };
 
     column(board.rows().enumerate().map(tile_row)).into()
+}
+
+fn view_tile(tile: Tile, light: bool, selected: bool) -> Element<'static, ()> {
+    let background = color!(match (light, selected) {
+        (_, true) => 0xba_ca_44,
+        (true, _) => 0xee_ee_d2,
+        (false, _) => 0x76_96_56,
+    })
+    .into();
+
+    button("")
+        .on_press_maybe(tile.piece_option.map(|_| ()))
+        .width(40)
+        .height(40)
+        .style(move |_, _| button::Style {
+            background: Some(background),
+            ..button::Style::default()
+        })
+        .into()
 }
 
 fn view_player(player: Player, money: u8, is_current: bool) -> Element<'static, Message> {
