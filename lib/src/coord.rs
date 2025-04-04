@@ -9,7 +9,10 @@ pub struct Coord {
 
 impl Coord {
     #[must_use]
-    pub const fn new(rank: u8, file: u8) -> Option<Self> {
+    pub fn new(rank: impl TryInto<u8>, file: impl TryInto<u8>) -> Option<Self> {
+        let rank = rank.try_into().ok()?;
+        let file = file.try_into().ok()?;
+        
         if rank > BOARD_RANKS || file > BOARD_FILES {
             return None;
         }
