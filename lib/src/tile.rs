@@ -1,32 +1,12 @@
 use crate::pieces::Piece;
-use std::ops::Deref;
+use crate::Player;
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum TileType {
     #[default]
     Regular,
     Town,
-    Baseline,
-}
-
-impl TileType {
-    #[must_use]
-    pub const fn has_supplies(self) -> bool {
-        match self {
-            Self::Town | Self::Baseline => true,
-            Self::Regular => false,
-        }
-    }
-
-    #[must_use]
-    pub const fn gives_income(self) -> bool {
-        matches!(self, Self::Town)
-    }
-
-    #[must_use]
-    pub const fn produces_troops(self) -> bool {
-        matches!(self, Self::Baseline)
-    }
+    Baseline(Player),
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -35,10 +15,32 @@ pub struct Tile {
     pub tile_type: TileType,
 }
 
-impl Deref for Tile {
-    type Target = TileType;
+impl Tile {
+    #[must_use]
+    pub const fn has_supplies(self, cur_player: Player) -> bool {
+        match self.tile_type {
+            TileType::Baseline(owner) => matches!(
+                (owner, cur_player),
+                (Player::P1, Player::P1) | (Player::P2, Player::P2)
+            ),
+            TileType::Town => true,
+            TileType::Regular => false,
+        }
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.tile_type
+    #[must_use]
+    pub const fn gives_income(self) -> bool {
+        matches!(self.tile_type, TileType::Town)
+    }
+
+    #[must_use]
+    pub const fn produces_troops(self, cur_player: Player) -> bool {
+        match self.tile_type {
+            TileType::Baseline(owner) => matches!(
+                (owner, cur_player),
+                (Player::P1, Player::P1) | (Player::P2, Player::P2)
+            ),
+            _ => false,
+        }
     }
 }

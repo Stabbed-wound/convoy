@@ -63,7 +63,7 @@ impl Game {
     pub const fn board(&self) -> &Board {
         &self.board
     }
-    
+
     #[must_use]
     pub const fn cur_player(&self) -> Player {
         self.cur_player
@@ -108,7 +108,7 @@ impl Game {
             return Err(CommandError::Error);
         }
 
-        if !self.board[coord].produces_troops() {
+        if !self.board[coord].produces_troops(self.cur_player) {
             return Err(CommandError::Error);
         }
 

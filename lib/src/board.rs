@@ -5,6 +5,7 @@ use crate::{
     constants::{BOARD_FILES, BOARD_RANKS},
     coord::Coord,
     tile::{Tile, TileType},
+    Player,
 };
 
 #[derive(Clone, Debug)]
@@ -46,10 +47,15 @@ impl Default for Board {
     fn default() -> Self {
         Self {
             tiles: array::from_fn(|rank| {
-                if rank == 0 || rank == (BOARD_RANKS - 1) as usize {
+                if rank == 0 {
                     array::from_fn(|_| Tile {
                         piece_option: None,
-                        tile_type: TileType::Baseline,
+                        tile_type: TileType::Baseline(Player::P1),
+                    })
+                } else if rank == (BOARD_RANKS - 1) as usize {
+                    array::from_fn(|_| Tile {
+                        piece_option: None,
+                        tile_type: TileType::Baseline(Player::P2),
                     })
                 } else {
                     array::from_fn(|_| Tile::default())
