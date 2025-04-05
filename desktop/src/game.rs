@@ -1,4 +1,6 @@
+use convoy::pieces::PieceType;
 use convoy::{board::Board, coord::Coord, tile::Tile, Command, Player};
+use iced::alignment::Vertical;
 use iced::widget::text;
 use iced::{
     alignment::Horizontal, color, font::Weight, widget::{button, column, container, container::background, rich_text, row, span},
@@ -12,19 +14,21 @@ use std::fmt::Debug;
 #[derive(Default)]
 pub struct State {
     game: convoy::Game,
-    select_mode: SelectMode,
+    action_mode: ActionMode,
     selected_tile: Option<Coord>,
+    selected_piece: Option<PieceType>,
 }
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    ChangeSelectMode(SelectMode),
+    ChangeActionMode(ActionMode),
+    ChangeSelectedPiece(PieceType),
     GameCommand(Command),
     TileClicked(usize, usize),
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
-pub enum SelectMode {
+pub enum ActionMode {
     #[default]
     Move,
     Purchase,
@@ -34,9 +38,21 @@ pub enum SelectMode {
 impl State {
     pub fn update(&mut self, message: Message) {
         match message {
-            Message::ChangeSelectMode(select_mode) => {
-                self.select_mode = select_mode;
+            Message::ChangeActionMode(select_mode) => {
+                self.action_mode = select_mode;
                 self.selected_tile = None;
+                self.selected_piece = None;
+            }
+            Message::ChangeSelectedPiece(piece_type) => {
+                if let Some(selected_piece) = self.selected_piece {
+                    if selected_piece == piece_type {
+                        self.selected_piece = None;
+                    } else {
+                        self.selected_piece = Some(piece_type);
+                    }
+                } else {
+                    self.selected_piece = Some(piece_type);
+                }
             }
             Message::GameCommand(command) => self
                 .game
@@ -55,7 +71,13 @@ impl State {
     }
 
     pub fn view(&self) -> Element<Message> {
-        let board = view_board(self.game.board(), self.selected_tile);
+        let board = match self.action_mode {
+            ActionMode::Move => view_move_action_board(self.game.board(), self.selected_tile),
+            ActionMode::Purchase => {
+                view_purchase_action_board(self.game.board(), self.game.cur_player())
+            }
+            ActionMode::Battle => view_battle_action_board(self.game.board()),
+        };
 
         let players = row![
             view_player(
@@ -69,18 +91,57 @@ impl State {
                 self.game.cur_player() == Player::P2
             )
         ]
-        .spacing(10);
+        .spacing(10)
+        .height(Fill)
+        .align_y(Vertical::Center);
 
-        let info = container(column![players]).center_y(Fill);
+        let piece_selector = |piece_type| {
+            const BUTTON_SIZE: u16 = 40;
 
-        let mode_selectors = container(
+            button(
+                text(match piece_type {
+                    PieceType::Artillery => "A",
+                    PieceType::Convoy => "C",
+                    PieceType::Infantry => "I",
+                    PieceType::Recon => "R",
+                })
+                .align_x(Horizontal::Center)
+                .align_y(Vertical::Center),
+            )
+            .on_press_maybe(if self.action_mode == ActionMode::Purchase {
+                Some(Message::ChangeSelectedPiece(piece_type))
+            } else {
+                None
+            })
+            .width(BUTTON_SIZE)
+            .height(BUTTON_SIZE)
+        };
+
+        let piece_selectors = container(
             column![
                 row![
-                    view_mode_selector(SelectMode::Move, self.select_mode),
-                    view_mode_selector(SelectMode::Purchase, self.select_mode)
+                    piece_selector(PieceType::Infantry),
+                    piece_selector(PieceType::Convoy)
                 ]
                 .spacing(5),
-                view_mode_selector(SelectMode::Battle, self.select_mode)
+                row![
+                    piece_selector(PieceType::Artillery),
+                    piece_selector(PieceType::Recon)
+                ]
+                .spacing(5)
+            ]
+            .spacing(5),
+        )
+        .center_y(Fill);
+
+        let action_selectors = container(
+            column![
+                row![
+                    view_action_selector(ActionMode::Move, self.action_mode),
+                    view_action_selector(ActionMode::Purchase, self.action_mode)
+                ]
+                .spacing(5),
+                view_action_selector(ActionMode::Battle, self.action_mode)
             ]
             .align_x(Horizontal::Center)
             .spacing(5),
@@ -91,14 +152,8 @@ impl State {
             container(button("End Turn").on_press(Message::GameCommand(Command::EndTurn)))
                 .center_y(Fill);
 
-        let controls = column![mode_selectors, end_turn_button]
-            .align_x(Horizontal::Center)
-            .spacing(5)
-            .padding(5)
-            .height(Fill);
-
-        let info_and_controls = container(
-            column![info, controls]
+        let sidebar = container(
+            column![players, piece_selectors, action_selectors, end_turn_button]
                 .spacing(15)
                 .align_x(Horizontal::Center)
                 .height(Fill),
@@ -106,7 +161,7 @@ impl State {
         .padding(15)
         .center_y(Fill);
 
-        row![board, info_and_controls]
+        row![board, sidebar]
             .width(Shrink)
             .height(Shrink)
             .padding(5)
@@ -114,13 +169,14 @@ impl State {
     }
 }
 
-fn view_board(board: &Board, selected_tile: Option<Coord>) -> Element<Message> {
+fn view_move_action_board(board: &Board, selected_tile: Option<Coord>) -> Element<Message> {
     let tile_row = |(row_index, tile_row): (usize, &[Tile])| {
         row(tile_row.iter().enumerate().map(|(col_index, tile)| {
             view_tile(
                 *tile,
                 (row_index + col_index) % 2 == 0,
                 selected_tile == Coord::new(row_index, col_index),
+                tile.piece_option.is_some(),
             )
             .map(move |()| Message::TileClicked(row_index, col_index))
         }))
@@ -130,8 +186,38 @@ fn view_board(board: &Board, selected_tile: Option<Coord>) -> Element<Message> {
     column(board.rows().enumerate().map(tile_row)).into()
 }
 
-fn view_tile(tile: Tile, light: bool, selected: bool) -> Element<'static, ()> {
-    let button_size = 30;
+fn view_purchase_action_board(board: &Board, player: Player) -> Element<Message> {
+    let tile_row = |(row_index, tile_row): (usize, &[Tile])| {
+        row(tile_row.iter().enumerate().map(|(col_index, tile)| {
+            view_tile(
+                *tile,
+                (row_index + col_index) % 2 == 0,
+                tile.produces_troops(player),
+                tile.produces_troops(player),
+            )
+            .map(move |()| Message::TileClicked(row_index, col_index))
+        }))
+        .into()
+    };
+
+    column(board.rows().enumerate().map(tile_row)).into()
+}
+
+fn view_battle_action_board(board: &Board) -> Element<Message> {
+    let tile_row = |(row_index, tile_row): (usize, &[Tile])| {
+        row(tile_row.iter().enumerate().map(|(col_index, tile)| {
+            view_tile(*tile, (row_index + col_index) % 2 == 0, false, false)
+                .map(move |()| Message::TileClicked(row_index, col_index))
+        }))
+        .into()
+    };
+
+    column(board.rows().enumerate().map(tile_row)).into()
+}
+
+fn view_tile(_tile: Tile, light: bool, selected: bool, enabled: bool) -> Element<'static, ()> {
+    const TILE_SIZE: u16 = 30;
+
     let background = color!(match (light, selected) {
         (_, true) => 0xba_ca_44,
         (true, _) => 0xee_ee_d2,
@@ -140,9 +226,9 @@ fn view_tile(tile: Tile, light: bool, selected: bool) -> Element<'static, ()> {
     .into();
 
     button("")
-        .on_press_maybe(tile.piece_option.map(|_| ()))
-        .width(button_size)
-        .height(button_size)
+        .on_press_maybe(if enabled { Some(()) } else { None })
+        .width(TILE_SIZE)
+        .height(TILE_SIZE)
         .style(move |_, _| button::Style {
             background: Some(background),
             ..button::Style::default()
@@ -174,19 +260,19 @@ fn view_player(player: Player, money: u8, is_current: bool) -> Element<'static, 
         .into()
 }
 
-fn view_mode_selector(select_mode: SelectMode, current: SelectMode) -> Element<'static, Message> {
+fn view_action_selector(action_mode: ActionMode, current: ActionMode) -> Element<'static, Message> {
     button(
-        text(match select_mode {
-            SelectMode::Move => "Move",
-            SelectMode::Purchase => "Purchase",
-            SelectMode::Battle => "Battle",
+        text(match action_mode {
+            ActionMode::Move => "Move",
+            ActionMode::Purchase => "Purchase",
+            ActionMode::Battle => "Battle",
         })
         .align_x(Horizontal::Center),
     )
-    .on_press_maybe(if select_mode == current {
+    .on_press_maybe(if action_mode == current {
         None
     } else {
-        Some(Message::ChangeSelectMode(select_mode))
+        Some(Message::ChangeActionMode(action_mode))
     })
     .width(100)
     .into()

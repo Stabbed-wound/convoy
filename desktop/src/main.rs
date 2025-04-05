@@ -57,6 +57,6 @@ impl App {
             .height(Fill)
             .width(Fill),
         )
-        // .explain(iced::color!(0x77_77_77))
+        .explain(iced::color!(0x77_77_77))
     }
 }
