@@ -3,10 +3,12 @@ pub mod constants;
 pub mod coord;
 pub mod pieces;
 pub mod tile;
+mod errors;
 
 use board::Board;
 use coord::{Coord, Move};
 use pieces::{Piece, PieceType};
+pub use errors::{CommandError, MoveError, PurchaseError, BattleError};
 use std::ops::Index;
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -30,8 +32,8 @@ pub enum DefenseAction {
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub enum Command {
-    Purchase(PieceType, Coord),
     Move(Move),
+    Purchase(PieceType, Coord),
     Battle {
         attack_actions: Vec<AttackAction>,
         defense_actions: Vec<DefenseAction>,
@@ -39,16 +41,6 @@ pub enum Command {
     },
     #[default]
     EndTurn,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum CommandError {
-    #[expect(
-        dead_code,
-        reason = "Generic error should be removed when all uses are replaced"
-    )]
-    #[error("Generic error")]
-    Error,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -73,6 +65,39 @@ impl Game {
     ///
     /// # Arguments
     ///
+    /// *
+    ///
+    /// returns:
+    ///
+    /// # Errors
+    ///
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// ```
+    pub fn do_command(&mut self, command: Command) -> Result<(), CommandError> {
+        match command {
+            Command::Move(r#move) => self.do_move(r#move).map_err(CommandError::Move),
+            Command::Purchase(piece_type, coord) => self.do_purchase(piece_type, coord).map_err(CommandError::Purchase),
+            Command::Battle {
+                attack_actions,
+                defense_actions,
+                target,
+            } => self.do_battle(attack_actions, defense_actions, target).map_err(CommandError::Battle),
+            Command::EndTurn => {
+                self.end_turn();
+                Ok(())
+            }
+        }
+    }
+
+    ///
+    ///
+    /// # Arguments
+    ///
     /// * `command`:
     ///
     /// returns: Result<(), `CommandError`>
@@ -86,47 +111,11 @@ impl Game {
     /// ```
     ///
     /// ```
-    pub fn do_command(&mut self, command: Command) -> Result<(), CommandError> {
-        match command {
-            Command::Purchase(piece_type, coord) => self.do_purchase(piece_type, coord),
-            Command::Move(r#move) => self.do_move(r#move),
-            Command::Battle {
-                attack_actions,
-                defense_actions,
-                target,
-            } => self.do_battle(attack_actions, defense_actions, target),
-            Command::EndTurn => {
-                self.do_resupply();
-                self.do_upkeep();
-                Ok(())
-            }
-        }
-    }
-
-    fn do_purchase(&mut self, piece_type: PieceType, coord: Coord) -> Result<(), CommandError> {
-        if piece_type.cost() > self[self.cur_player] {
-            return Err(CommandError::Error);
-        }
-
-        if !self.board[coord].produces_troops(self.cur_player) {
-            return Err(CommandError::Error);
-        }
-
-        if self.board[coord].piece_option.is_some() {
-            return Err(CommandError::Error);
-        }
-
-        *self.index_mut(self.cur_player) -= piece_type.cost();
-        self.board[coord].piece_option = Some(Piece::new(self.cur_player, piece_type));
-
-        Ok(())
-    }
-
-    fn do_move(&mut self, Move { from, to }: Move) -> Result<(), CommandError> {
-        let piece = self.board[from].piece_option.ok_or(CommandError::Error)?;
+    pub fn do_move(&mut self, Move { from, to }: Move) -> Result<(), MoveError> {
+        let piece = self.board[from].piece_option.ok_or(MoveError)?;
 
         if !piece.get_moves(from, &self.board).contains(&to) {
-            return Err(CommandError::Error);
+            return Err(MoveError);
         }
 
         self.board[from].piece_option = None;
@@ -135,16 +124,91 @@ impl Game {
         Ok(())
     }
 
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// *
+    ///
+    /// returns:
+    ///
+    /// # Errors
+    ///
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// ```
+    pub fn do_purchase(&mut self, piece_type: PieceType, coord: Coord) -> Result<(), PurchaseError> {
+        if piece_type.cost() > self[self.cur_player] {
+            return Err(PurchaseError);
+        }
+
+        if !self.board[coord].produces_troops(self.cur_player) {
+            return Err(PurchaseError);
+        }
+
+        if self.board[coord].piece_option.is_some() {
+            return Err(PurchaseError);
+        }
+
+        *self.index_mut(self.cur_player) -= piece_type.cost();
+        self.board[coord].piece_option = Some(Piece::new(self.cur_player, piece_type));
+
+        Ok(())
+    }
+
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `command`:
+    ///
+    /// returns: Result<(), `CommandError`>
+    ///
+    /// # Errors
+    ///
+    /// Will return Err if `command` is not possible
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// ```
     #[allow(clippy::unnecessary_wraps)]
     #[allow(clippy::unused_self)]
     #[allow(clippy::needless_pass_by_ref_mut)]
-    fn do_battle(
+    pub fn do_battle(
         &mut self,
         _attack_actions: Vec<AttackAction>,
         _defense_actions: Vec<DefenseAction>,
         _target: Coord,
-    ) -> Result<(), CommandError> {
-        Ok(())
+    ) -> Result<(), BattleError> {
+        Err(BattleError)
+    }
+
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `command`:
+    ///
+    /// returns: Result<(), `CommandError`>
+    ///
+    /// # Errors
+    ///
+    /// Will return Err if `command` is not possible
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// ```
+    pub fn end_turn(&mut self) {
+        self.do_resupply();
+        self.do_upkeep();
     }
 
     fn do_upkeep(&mut self) {
@@ -171,8 +235,7 @@ impl Game {
     }
 
     fn do_resupply(&mut self) {
-        /* get log_net placeholder */
-        let () = ();
+        // TODO calculate logistics network
 
         self.cur_player = match self.cur_player {
             Player::P1 => Player::P2,
