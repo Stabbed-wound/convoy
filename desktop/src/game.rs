@@ -215,7 +215,7 @@ fn view_battle_action_board(board: &Board) -> Element<Message> {
     column(board.rows().enumerate().map(tile_row)).into()
 }
 
-fn view_tile(_tile: Tile, light: bool, selected: bool, enabled: bool) -> Element<'static, ()> {
+fn view_tile(tile: Tile, light: bool, selected: bool, enabled: bool) -> Element<'static, ()> {
     const TILE_SIZE: u16 = 30;
 
     let background = color!(match (light, selected) {
@@ -225,15 +225,26 @@ fn view_tile(_tile: Tile, light: bool, selected: bool, enabled: bool) -> Element
     })
     .into();
 
-    button("")
-        .on_press_maybe(if enabled { Some(()) } else { None })
-        .width(TILE_SIZE)
-        .height(TILE_SIZE)
-        .style(move |_, _| button::Style {
-            background: Some(background),
-            ..button::Style::default()
-        })
-        .into()
+    button(
+        text(
+            tile.piece_option
+                .map_or("", |piece| match piece.piece_type {
+                    PieceType::Artillery => "A",
+                    PieceType::Convoy => "C",
+                    PieceType::Infantry => "I",
+                    PieceType::Recon => "R",
+                }),
+        )
+        .center(),
+    )
+    .on_press_maybe(if enabled { Some(()) } else { None })
+    .width(TILE_SIZE)
+    .height(TILE_SIZE)
+    .style(move |_, _| button::Style {
+        background: Some(background),
+        ..button::Style::default()
+    })
+    .into()
 }
 
 fn view_player(player: Player, money: u8, is_current: bool) -> Element<'static, Message> {
