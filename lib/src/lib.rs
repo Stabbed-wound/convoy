@@ -43,7 +43,7 @@ pub enum Command {
     EndTurn,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Game {
     board: Board,
     player_money: [u8; 2],
@@ -51,6 +51,11 @@ pub struct Game {
 }
 
 impl Game {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     #[must_use]
     pub const fn board(&self) -> &Board {
         &self.board
@@ -241,6 +246,16 @@ impl Game {
             Player::P1 => Player::P2,
             Player::P2 => Player::P1,
         };
+    }
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        Self {
+            board: Board::new(),
+            player_money: [3; 2],
+            cur_player: Player::P1,
+        }
     }
 }
 
