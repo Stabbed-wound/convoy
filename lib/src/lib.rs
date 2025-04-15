@@ -217,17 +217,18 @@ impl Game {
     }
 
     fn do_upkeep(&mut self) {
-        *self.index_mut(self.cur_player) = self
-            .board
-            .iter()
-            .filter(|tile| {
-                tile.piece_option.is_some_and(|piece| {
-                    piece.piece_type == PieceType::Convoy && tile.gives_income()
+        *self.index_mut(self.cur_player) += u8::try_from(
+            self.board
+                .iter()
+                .filter(|tile| {
+                    tile.piece_option.is_some_and(|piece| {
+                        piece.piece_type == PieceType::Convoy && tile.gives_income()
+                    })
                 })
-            })
-            .count()
-            .try_into()
-            .expect("There are no more than 256 towns");
+                .count(),
+        )
+        .expect("There are no more than 256 towns")
+            + 2;
 
         self.board
             .iter_mut()
