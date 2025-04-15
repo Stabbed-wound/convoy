@@ -27,12 +27,17 @@ pub enum Message {
     TileClicked(usize, usize),
 }
 
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ActionMode {
-    #[default]
-    Move,
-    Purchase,
+    Move(Option<Coord>),
+    Purchase(PieceType),
     Battle,
+}
+
+impl Default for ActionMode {
+    fn default() -> Self {
+        Self::Move(None)
+    }
 }
 
 impl State {
@@ -72,8 +77,10 @@ impl State {
 
     pub fn view(&self) -> Element<Message> {
         let board = match self.action_mode {
-            ActionMode::Move => view_move_action_board(self.game.board(), self.selected_tile),
-            ActionMode::Purchase => {
+            ActionMode::Move(piece_option) => {
+                view_move_action_board(self.game.board(), piece_option)
+            }
+            ActionMode::Purchase(_) => {
                 view_purchase_action_board(self.game.board(), self.game.cur_player())
             }
             ActionMode::Battle => view_battle_action_board(self.game.board()),
@@ -108,7 +115,7 @@ impl State {
                 .align_x(Horizontal::Center)
                 .align_y(Vertical::Center),
             )
-            .on_press_maybe(if self.action_mode == ActionMode::Purchase {
+            .on_press_maybe(if matches!(self.action_mode, ActionMode::Purchase(_)) {
                 Some(Message::ChangeSelectedPiece(piece_type))
             } else {
                 None
@@ -137,11 +144,20 @@ impl State {
         let action_selectors = container(
             column![
                 row![
-                    view_action_selector(ActionMode::Move, self.action_mode),
-                    view_action_selector(ActionMode::Purchase, self.action_mode)
+                    view_action_selector(
+                        ActionMode::Move(None),
+                        matches!(self.action_mode, ActionMode::Move(_))
+                    ),
+                    view_action_selector(
+                        ActionMode::Purchase(PieceType::Infantry),
+                        matches!(self.action_mode, ActionMode::Purchase(_))
+                    )
                 ]
                 .spacing(5),
-                view_action_selector(ActionMode::Battle, self.action_mode)
+                view_action_selector(
+                    ActionMode::Battle,
+                    matches!(self.action_mode, ActionMode::Battle)
+                )
             ]
             .align_x(Horizontal::Center)
             .spacing(5),
@@ -271,16 +287,16 @@ fn view_player(player: Player, money: u8, is_current: bool) -> Element<'static, 
         .into()
 }
 
-fn view_action_selector(action_mode: ActionMode, current: ActionMode) -> Element<'static, Message> {
+fn view_action_selector(action_mode: ActionMode, inactive: bool) -> Element<'static, Message> {
     button(
         text(match action_mode {
-            ActionMode::Move => "Move",
-            ActionMode::Purchase => "Purchase",
+            ActionMode::Move(_) => "Move",
+            ActionMode::Purchase(_) => "Purchase",
             ActionMode::Battle => "Battle",
         })
         .align_x(Horizontal::Center),
     )
-    .on_press_maybe(if action_mode == current {
+    .on_press_maybe(if inactive {
         None
     } else {
         Some(Message::ChangeActionMode(action_mode))
