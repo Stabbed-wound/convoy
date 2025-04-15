@@ -1,9 +1,6 @@
-use convoy::pieces::PieceType;
-use convoy::{board::Board, coord::Coord, tile::Tile, Command, Player};
-use iced::alignment::Vertical;
-use iced::widget::text;
+use convoy::{board::Board, coord::Coord, coord::Move, pieces::PieceType, tile::Tile, Player};
 use iced::{
-    alignment::Horizontal, color, font::Weight, widget::{button, column, container, container::background, rich_text, row, span},
+    alignment::{Horizontal, Vertical}, color, font::Weight, widget::{button, column, container, container::background, rich_text, row, span, text},
     Element,
     Fill,
     Font,
@@ -15,15 +12,13 @@ use std::fmt::Debug;
 pub struct State {
     game: convoy::Game,
     action_mode: ActionMode,
-    selected_tile: Option<Coord>,
-    selected_piece: Option<PieceType>,
 }
 
 #[derive(Clone, Debug)]
 pub enum Message {
     ChangeActionMode(ActionMode),
-    ChangeSelectedPiece(PieceType),
-    GameCommand(Command),
+    ChangePieceType(PieceType),
+    EndTurn,
     TileClicked(usize, usize),
 }
 
@@ -45,33 +40,41 @@ impl State {
         match message {
             Message::ChangeActionMode(select_mode) => {
                 self.action_mode = select_mode;
-                self.selected_tile = None;
-                self.selected_piece = None;
             }
-            Message::ChangeSelectedPiece(piece_type) => {
-                if let Some(selected_piece) = self.selected_piece {
-                    if selected_piece == piece_type {
-                        self.selected_piece = None;
-                    } else {
-                        self.selected_piece = Some(piece_type);
-                    }
-                } else {
-                    self.selected_piece = Some(piece_type);
+            Message::ChangePieceType(new_type) => {
+                if let ActionMode::Purchase(piece_type) = &mut self.action_mode {
+                    *piece_type = new_type;
                 }
             }
-            Message::GameCommand(command) => self
-                .game
-                .do_command(command)
-                .expect("Not handling errors yet"),
-            Message::TileClicked(row, col) => {
-                let new = Coord::new(row, col);
+            Message::EndTurn => {
+                self.action_mode = ActionMode::default();
+                self.game.end_turn();
+            }
+            Message::TileClicked(row, col) => match &mut self.action_mode {
+                ActionMode::Move(piece_option) => {
+                    let tile_coord = Coord::new(row, col)
+                        .expect("A TileClicked message is always a valid coord");
 
-                if self.selected_tile == new {
-                    self.selected_tile = None;
-                } else {
-                    self.selected_tile = new;
+                    match piece_option {
+                        &mut Some(piece) if piece == tile_coord => *piece_option = None,
+                        &mut Some(piece) => {
+                            let _ = self.game.do_move(Move {
+                                from: piece,
+                                to: tile_coord,
+                            });
+                        }
+                        None => *piece_option = Some(tile_coord),
+                    }
                 }
-            }
+                &mut ActionMode::Purchase(piece_type) => {
+                    let _ = self.game.do_purchase(
+                        piece_type,
+                        Coord::new(row, col)
+                            .expect("A TileClicked message is always a valid coord"),
+                    );
+                }
+                ActionMode::Battle => {}
+            },
         }
     }
 
@@ -116,7 +119,7 @@ impl State {
                 .align_y(Vertical::Center),
             )
             .on_press_maybe(if matches!(self.action_mode, ActionMode::Purchase(_)) {
-                Some(Message::ChangeSelectedPiece(piece_type))
+                Some(Message::ChangePieceType(piece_type))
             } else {
                 None
             })
@@ -165,8 +168,7 @@ impl State {
         .center_y(Fill);
 
         let end_turn_button =
-            container(button("End Turn").on_press(Message::GameCommand(Command::EndTurn)))
-                .center_y(Fill);
+            container(button("End Turn").on_press(Message::EndTurn)).center_y(Fill);
 
         let sidebar = container(
             column![players, piece_selectors, action_selectors, end_turn_button]
