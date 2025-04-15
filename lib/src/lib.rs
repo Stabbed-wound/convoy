@@ -1,14 +1,14 @@
 pub mod board;
 pub mod constants;
 pub mod coord;
+mod errors;
 pub mod pieces;
 pub mod tile;
-mod errors;
 
 use board::Board;
 use coord::{Coord, Move};
+pub use errors::{BattleError, CommandError, MoveError, PurchaseError};
 use pieces::{Piece, PieceType};
-pub use errors::{CommandError, MoveError, PurchaseError, BattleError};
 use std::ops::Index;
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
@@ -86,12 +86,16 @@ impl Game {
     pub fn do_command(&mut self, command: Command) -> Result<(), CommandError> {
         match command {
             Command::Move(r#move) => self.do_move(r#move).map_err(CommandError::Move),
-            Command::Purchase(piece_type, coord) => self.do_purchase(piece_type, coord).map_err(CommandError::Purchase),
+            Command::Purchase(piece_type, coord) => self
+                .do_purchase(piece_type, coord)
+                .map_err(CommandError::Purchase),
             Command::Battle {
                 attack_actions,
                 defense_actions,
                 target,
-            } => self.do_battle(attack_actions, defense_actions, target).map_err(CommandError::Battle),
+            } => self
+                .do_battle(attack_actions, defense_actions, target)
+                .map_err(CommandError::Battle),
             Command::EndTurn => {
                 self.end_turn();
                 Ok(())
@@ -146,7 +150,11 @@ impl Game {
     /// ```
     ///
     /// ```
-    pub fn do_purchase(&mut self, piece_type: PieceType, coord: Coord) -> Result<(), PurchaseError> {
+    pub fn do_purchase(
+        &mut self,
+        piece_type: PieceType,
+        coord: Coord,
+    ) -> Result<(), PurchaseError> {
         if piece_type.cost() > self[self.cur_player] {
             return Err(PurchaseError);
         }
