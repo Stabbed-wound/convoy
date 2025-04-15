@@ -14,6 +14,11 @@ pub struct Board {
 }
 
 impl Board {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Neighbours are orthogonal only
     #[must_use]
     pub fn get_neighbours(&self, Coord { rank, file }: Coord) -> Vec<Tile> {
