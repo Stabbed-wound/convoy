@@ -65,6 +65,7 @@ impl State {
                                 from: piece,
                                 to: tile_coord,
                             });
+                            *piece_option = None;
                         }
                         None => *piece_option = Some(tile_coord),
                     }
@@ -89,7 +90,7 @@ impl State {
     pub fn view(&self) -> Element<Message> {
         let board = match self.action_mode {
             ActionMode::Move(piece_option) => {
-                view_move_action_board(self.game.board(), piece_option)
+                view_move_action_board(self.game.board(), piece_option, self.game.cur_player())
             }
             ActionMode::Purchase(_) => {
                 view_purchase_action_board(self.game.board(), self.game.cur_player())
@@ -173,21 +174,45 @@ impl State {
     }
 }
 
-fn view_move_action_board(board: &Board, selected_tile: Option<Coord>) -> Element<Message> {
-    let tile_row = |(row_index, tile_row): (usize, &[Tile])| {
-        row(tile_row.iter().enumerate().map(|(col_index, tile)| {
-            view_tile(
-                *tile,
-                (row_index + col_index) % 2 == 0,
-                selected_tile == Coord::new(row_index, col_index),
-                tile.piece_option.is_some(),
-            )
-            .map(move |()| Message::TileClicked(row_index, col_index))
-        }))
-        .into()
+fn view_move_action_board(
+    board: &Board,
+    selected_piece: Option<Coord>,
+    cur_turn: Player,
+) -> Element<Message> {
+    let board_tile = |row, col, tile: &Tile| {
+        let selectable = selected_piece.map_or_else(
+            || {
+                tile.piece_option
+                    .is_some_and(|piece| piece.owner == cur_turn && !piece.exhausted)
+            },
+            |piece| {
+                let coord = Coord::new(row, col).expect("row and col are always a valid Coord");
+
+                piece == coord
+                    || board
+                        .get_moves(piece)
+                        .expect("piece will always index a valid Piece")
+                        .contains(&coord)
+            },
+        );
+
+        view_tile(*tile, (row + col) % 2 == 0, selectable, selectable)
+            .map(move |()| Message::TileClicked(row, col))
     };
 
-    column(board.rows().enumerate().map(tile_row)).into()
+    column(
+        board
+            .rows()
+            .enumerate()
+            .map(|(row_index, tile_row): (usize, &[Tile])| {
+                row(tile_row
+                    .iter()
+                    .enumerate()
+                    .map(|(col_index, tile)| board_tile(row_index, col_index, tile)))
+                .into()
+            }),
+    )
+    .into()
 }
 
 fn view_purchase_action_board(board: &Board, player: Player) -> Element<Message> {
