@@ -1,7 +1,11 @@
 use crate::constants::{BOARD_FILES, BOARD_RANKS, RANK_LETTERS};
 use std::fmt::{Display, Formatter};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coord {
     pub rank: u8,
     pub file: u8,
@@ -41,6 +45,7 @@ impl Display for Coord {
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Move {
     pub from: Coord,
     pub to: Coord,

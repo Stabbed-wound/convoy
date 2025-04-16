@@ -1,6 +1,5 @@
 use std::ops::{Index, IndexMut};
 use std::{array, slice};
-
 use crate::{
     constants::{BOARD_FILES, BOARD_RANKS},
     coord::Coord,
@@ -8,7 +7,11 @@ use crate::{
     Player,
 };
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Board {
     tiles: [[Tile; BOARD_FILES as usize]; BOARD_RANKS as usize],
 }

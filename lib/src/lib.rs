@@ -11,7 +11,11 @@ pub use errors::{BattleError, CommandError, MoveError, PurchaseError};
 use pieces::{Piece, PieceType};
 use std::ops::Index;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Player {
     #[default]
     P1,
@@ -19,6 +23,7 @@ pub enum Player {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Action {
     Command(Command),
     EndTurn,
@@ -26,13 +31,15 @@ pub enum Action {
 
 #[must_use]
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ActionOutcome {
     Ongoing(Box<Game>),
     Draw,
-    Winner(Player)
+    Winner(Player),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Command {
     Move(Move),
     Purchase(PieceType, Coord),
@@ -44,18 +51,21 @@ pub enum Command {
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum AttackCommand {
     Attack(Coord),
     MoveAttack(Move),
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum DefenseCommand {
     Defend(Coord),
     Retreat(Move),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Game {
     board: Board,
     player_money: [u8; 2],
@@ -106,7 +116,7 @@ impl Game {
                 Ok(()) => Ok(ActionOutcome::Ongoing(self)),
                 Err(err) => Err((self, err)),
             },
-            Action::EndTurn => Ok(self.end_turn())
+            Action::EndTurn => Ok(self.end_turn()),
         }
     }
 
@@ -267,7 +277,7 @@ impl Game {
     pub fn end_turn(mut self: Box<Self>) -> ActionOutcome {
         self.do_resupply();
         self.do_upkeep();
-        
+
         ActionOutcome::Ongoing(self)
     }
 

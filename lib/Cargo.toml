@@ -11,3 +11,4 @@ workspace = true
 
 [dependencies]
 thiserror = "2.0.12"
+serde = {version = "1.0.219", optional = true, features = ["derive"]}

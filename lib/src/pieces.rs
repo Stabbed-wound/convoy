@@ -4,7 +4,11 @@ use std::{
     ops::{Deref, RangeInclusive},
 };
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum PieceType {
     Artillery,
     Convoy,
@@ -66,6 +70,7 @@ impl PieceType {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Piece {
     pub owner: Player,
     pub exhausted: bool,

@@ -1,7 +1,11 @@
 use crate::pieces::Piece;
 use crate::Player;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum TileType {
     #[default]
     Regular,
@@ -10,6 +14,7 @@ pub enum TileType {
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Tile {
     pub piece_option: Option<Piece>,
     pub tile_type: TileType,
