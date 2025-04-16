@@ -265,23 +265,34 @@ fn view_player(player: Player, money: u8, is_current: bool) -> Element<'static, 
 fn view_piece_selector(piece_type: PieceType, state: &State) -> Element<Message> {
     const BUTTON_SIZE: u16 = 40;
 
-    button(
+    let selector = button(
         text(piece_type.to_string())
             .align_x(Horizontal::Center)
             .align_y(Vertical::Center),
     )
-    .on_press_maybe(match state.action_mode {
-        ActionMode::Purchase(selected)
-            if selected != piece_type
-                && state.game[state.game.cur_player()] >= piece_type.cost() =>
-        {
-            Some(Message::ChangePieceType(piece_type))
-        }
-        _ => None,
-    })
     .width(BUTTON_SIZE)
-    .height(BUTTON_SIZE)
-    .into()
+    .height(BUTTON_SIZE);
+
+    let ActionMode::Purchase(current_type) = state.action_mode else {
+        return selector.into();
+    };
+
+    selector
+        .on_press_maybe(
+            if state.game[state.game.cur_player()] >= piece_type.cost() {
+                Some(Message::ChangePieceType(piece_type))
+            } else {
+                None
+            },
+        )
+        .style(move |theme, status| {
+            if piece_type == current_type {
+                button::primary(theme, button::Status::Hovered)
+            } else {
+                button::primary(theme, status)
+            }
+        })
+        .into()
 }
 
 fn view_action_selector(action_mode: ActionMode, inactive: bool) -> Element<'static, Message> {
