@@ -105,38 +105,16 @@ impl State {
         .height(Fill)
         .align_y(Vertical::Center);
 
-        let piece_selector = |piece_type| {
-            const BUTTON_SIZE: u16 = 40;
-
-            button(
-                text(match piece_type {
-                    PieceType::Artillery => "A",
-                    PieceType::Convoy => "C",
-                    PieceType::Infantry => "I",
-                    PieceType::Recon => "R",
-                })
-                .align_x(Horizontal::Center)
-                .align_y(Vertical::Center),
-            )
-            .on_press_maybe(if matches!(self.action_mode, ActionMode::Purchase(_)) {
-                Some(Message::ChangePieceType(piece_type))
-            } else {
-                None
-            })
-            .width(BUTTON_SIZE)
-            .height(BUTTON_SIZE)
-        };
-
         let piece_selectors = container(
             column![
                 row![
-                    piece_selector(PieceType::Infantry),
-                    piece_selector(PieceType::Convoy)
+                    view_piece_selector(PieceType::Infantry, self),
+                    view_piece_selector(PieceType::Convoy, self)
                 ]
                 .spacing(5),
                 row![
-                    piece_selector(PieceType::Artillery),
-                    piece_selector(PieceType::Recon)
+                    view_piece_selector(PieceType::Artillery, self),
+                    view_piece_selector(PieceType::Recon, self)
                 ]
                 .spacing(5)
             ]
@@ -287,6 +265,33 @@ fn view_player(player: Player, money: u8, is_current: bool) -> Element<'static, 
         .padding(5)
         .style(|_| background(color!(0x99_99_99)))
         .into()
+}
+
+fn view_piece_selector(piece_type: PieceType, state: &State) -> Element<Message> {
+    const BUTTON_SIZE: u16 = 40;
+
+    button(
+        text(match piece_type {
+            PieceType::Artillery => "A",
+            PieceType::Convoy => "C",
+            PieceType::Infantry => "I",
+            PieceType::Recon => "R",
+        })
+        .align_x(Horizontal::Center)
+        .align_y(Vertical::Center),
+    )
+    .on_press_maybe(match state.action_mode {
+        ActionMode::Purchase(selected)
+            if selected != piece_type
+                && state.game[state.game.cur_player()] >= piece_type.cost() =>
+        {
+            Some(Message::ChangePieceType(piece_type))
+        }
+        _ => None,
+    })
+    .width(BUTTON_SIZE)
+    .height(BUTTON_SIZE)
+    .into()
 }
 
 fn view_action_selector(action_mode: ActionMode, inactive: bool) -> Element<'static, Message> {
