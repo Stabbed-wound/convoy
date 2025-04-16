@@ -3,21 +3,21 @@ use thiserror::Error;
 #[derive(Copy, Clone, Debug, Error, Eq, PartialEq)]
 pub enum CommandError {
     #[error(transparent)]
-    Move(MoveError),
+    Move(#[from]MoveError),
     #[error(transparent)]
-    Purchase(PurchaseError),
+    Purchase(#[from]PurchaseError),
     #[error(transparent)]
-    Battle(BattleError),
+    Battle(#[from]BattleError),
 }
 
 #[derive(Copy, Clone, Debug, Error, Eq, PartialEq)]
-#[error("")]
+#[error("Move Error")]
 pub struct MoveError;
 
 #[derive(Copy, Clone, Debug, Error, Eq, PartialEq)]
-#[error("")]
+#[error("Purchase Error")]
 pub struct PurchaseError;
 
 #[derive(Copy, Clone, Debug, Error, Eq, PartialEq)]
-#[error("")]
+#[error("Battle Error")]
 pub struct BattleError;
