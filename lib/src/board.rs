@@ -19,6 +19,11 @@ impl Board {
         Self::default()
     }
 
+    #[must_use]
+    pub fn get_moves(&self, piece_coord: Coord) -> Option<Vec<Coord>> {
+        Some(self[piece_coord].piece_option?.get_moves(piece_coord, self))
+    }
+
     /// Neighbours are orthogonal only
     #[must_use]
     pub fn get_neighbours(&self, Coord { rank, file }: Coord) -> Vec<Tile> {
