@@ -1,13 +1,6 @@
 mod game;
 
-use iced::{
-    alignment::Horizontal, application, widget::{column, container, text}, window,
-    window::Position,
-    Element,
-    Fill,
-    Shrink,
-    Size,
-};
+use iced::{Element, Fill, Size, application, widget::container, window, window::Position};
 
 fn main() -> iced::Result {
     application("Convoy", App::update, App::view)
@@ -44,19 +37,7 @@ impl App {
     }
 
     pub fn view(&self) -> Element<AppMessage> {
-        Element::<AppMessage>::from(
-            column![
-                text("App").size(20),
-                container(self.game.view().map(AppMessage::Game))
-                    .center_y(Fill)
-                    .center_x(Shrink)
-            ]
-            .padding([10, 0])
-            .spacing(10)
-            .align_x(Horizontal::Center)
-            .height(Fill)
-            .width(Fill),
-        )
-        .explain(iced::color!(0x77_77_77))
+        Element::<AppMessage>::from(container(self.game.view().map(AppMessage::Game)).center(Fill))
+            .explain(iced::color!(0x77_77_77))
     }
 }
