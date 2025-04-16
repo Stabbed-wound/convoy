@@ -24,7 +24,7 @@ struct App {
     game: game::State,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 enum AppMessage {
     Game(game::Message),
 }
@@ -38,6 +38,6 @@ impl App {
 
     pub fn view(&self) -> Element<AppMessage> {
         Element::<AppMessage>::from(container(self.game.view().map(AppMessage::Game)).center(Fill))
-            .explain(iced::color!(0x77_77_77))
+            // .explain(iced::color!(0x77_77_77))
     }
 }

@@ -18,32 +18,44 @@ pub enum Player {
     P2,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Action {
+    Command(Command),
+    EndTurn,
+}
+
+#[must_use]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ActionOutcome {
+    Ongoing(Box<Game>),
+    Draw,
+    Winner(Player)
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Command {
+    Move(Move),
+    Purchase(PieceType, Coord),
+    Battle {
+        attack_commands: Vec<AttackCommand>,
+        defense_commands: Vec<DefenseCommand>,
+        target: Coord,
+    },
+}
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum AttackAction {
+pub enum AttackCommand {
     Attack(Coord),
     MoveAttack(Move),
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum DefenseAction {
+pub enum DefenseCommand {
     Defend(Coord),
     Retreat(Move),
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub enum Command {
-    Move(Move),
-    Purchase(PieceType, Coord),
-    Battle {
-        attack_actions: Vec<AttackAction>,
-        defense_actions: Vec<DefenseAction>,
-        target: Coord,
-    },
-    #[default]
-    EndTurn,
-}
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Game {
     board: Board,
     player_money: [u8; 2],
@@ -52,8 +64,8 @@ pub struct Game {
 
 impl Game {
     #[must_use]
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new() -> Box<Self> {
+        Box::new(Self::default())
     }
 
     #[must_use]
@@ -64,6 +76,38 @@ impl Game {
     #[must_use]
     pub const fn cur_player(&self) -> Player {
         self.cur_player
+    }
+}
+
+impl Game {
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// *
+    ///
+    /// returns:
+    ///
+    /// # Errors
+    ///
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// ```
+    pub fn take_action(
+        mut self: Box<Self>,
+        action: Action,
+    ) -> Result<ActionOutcome, (Box<Self>, CommandError)> {
+        match action {
+            Action::Command(command) => match self.do_command(command) {
+                Ok(()) => Ok(ActionOutcome::Ongoing(self)),
+                Err(err) => Err((self, err)),
+            },
+            Action::EndTurn => Ok(self.end_turn())
+        }
     }
 
     ///
@@ -90,16 +134,12 @@ impl Game {
                 .do_purchase(piece_type, coord)
                 .map_err(CommandError::Purchase),
             Command::Battle {
-                attack_actions,
-                defense_actions,
+                attack_commands,
+                defense_commands,
                 target,
             } => self
-                .do_battle(attack_actions, defense_actions, target)
+                .do_battle(attack_commands, defense_commands, target)
                 .map_err(CommandError::Battle),
-            Command::EndTurn => {
-                self.end_turn();
-                Ok(())
-            }
         }
     }
 
@@ -200,8 +240,8 @@ impl Game {
     #[allow(clippy::needless_pass_by_ref_mut)]
     pub fn do_battle(
         &mut self,
-        _attack_actions: Vec<AttackAction>,
-        _defense_actions: Vec<DefenseAction>,
+        _attack_commands: Vec<AttackCommand>,
+        _defense_commands: Vec<DefenseCommand>,
         _target: Coord,
     ) -> Result<(), BattleError> {
         Err(BattleError)
@@ -224,9 +264,11 @@ impl Game {
     /// ```
     ///
     /// ```
-    pub fn end_turn(&mut self) {
+    pub fn end_turn(mut self: Box<Self>) -> ActionOutcome {
         self.do_resupply();
         self.do_upkeep();
+        
+        ActionOutcome::Ongoing(self)
     }
 
     fn do_upkeep(&mut self) {

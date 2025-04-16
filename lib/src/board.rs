@@ -8,7 +8,7 @@ use crate::{
     Player,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Board {
     tiles: [[Tile; BOARD_FILES as usize]; BOARD_RANKS as usize],
 }

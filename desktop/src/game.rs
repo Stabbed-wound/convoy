@@ -1,4 +1,6 @@
-use convoy::{board::Board, coord::Coord, coord::Move, pieces::PieceType, tile::Tile, Player};
+use convoy::{
+    board::Board, coord::Coord, coord::Move, pieces::PieceType, tile::Tile, ActionOutcome, Player,
+};
 use iced::{
     alignment::{Horizontal, Vertical}, color, font::Weight, widget::{button, column, container, container::background, rich_text, row, span, text},
     Element,
@@ -8,13 +10,21 @@ use iced::{
 };
 use std::fmt::Debug;
 
-#[derive(Default)]
 pub struct State {
-    game: convoy::Game,
+    game: Option<Box<convoy::Game>>,
     action_mode: ActionMode,
 }
 
-#[derive(Clone, Debug)]
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            game: Some(convoy::Game::new()),
+            action_mode: ActionMode::default(),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
 pub enum Message {
     ChangeActionMode(ActionMode),
     ChangePieceType(PieceType),
@@ -22,7 +32,7 @@ pub enum Message {
     TileClicked(usize, usize),
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ActionMode {
     Move(Option<Coord>),
     Purchase(Option<PieceType>),
@@ -37,6 +47,10 @@ impl Default for ActionMode {
 
 impl State {
     pub fn update(&mut self, message: Message) {
+        let Some(game) = &mut self.game else {
+            return;
+        };
+
         match message {
             Message::ChangeActionMode(select_mode) => {
                 self.action_mode = select_mode;
@@ -50,8 +64,15 @@ impl State {
                 }
             }
             Message::EndTurn => {
-                self.action_mode = ActionMode::default();
-                self.game.end_turn();
+                let game = self.game.take().expect("If we're here game is Some");
+                match game.end_turn() {
+                    ActionOutcome::Ongoing(game) => {
+                        self.action_mode = ActionMode::default();
+                        self.game = Some(game);
+                    }
+                    ActionOutcome::Draw => todo!(),
+                    ActionOutcome::Winner(_) => todo!(),
+                }
             }
             Message::TileClicked(row, col) => match &mut self.action_mode {
                 ActionMode::Move(piece_option) => {
@@ -61,7 +82,7 @@ impl State {
                     match piece_option {
                         &mut Some(piece) if piece == tile_coord => *piece_option = None,
                         &mut Some(piece) => {
-                            let _ = self.game.do_move(Move {
+                            let _ = game.do_move(Move {
                                 from: piece,
                                 to: tile_coord,
                             });
@@ -72,12 +93,12 @@ impl State {
                 }
                 ActionMode::Purchase(piece_opt) => {
                     if let &mut Some(piece_type) = piece_opt {
-                        let _ = self.game.do_purchase(
+                        let _ = game.do_purchase(
                             piece_type,
                             Coord::new(row, col)
                                 .expect("A TileClicked message is always a valid coord"),
                         );
-                        if self.game[self.game.cur_player()] < piece_type.cost() {
+                        if game[game.cur_player()] < piece_type.cost() {
                             *piece_opt = None;
                         }
                     }
@@ -88,26 +109,28 @@ impl State {
     }
 
     pub fn view(&self) -> Element<Message> {
+        let Some(game) = &self.game else {
+            return text("Game Over").into();
+        };
+
         let board = match self.action_mode {
             ActionMode::Move(piece_option) => {
-                view_move_action_board(self.game.board(), piece_option, self.game.cur_player())
+                view_move_action_board(game.board(), piece_option, game.cur_player())
             }
-            ActionMode::Purchase(_) => {
-                view_purchase_action_board(self.game.board(), self.game.cur_player())
-            }
-            ActionMode::Battle => view_battle_action_board(self.game.board()),
+            ActionMode::Purchase(_) => view_purchase_action_board(game.board(), game.cur_player()),
+            ActionMode::Battle => view_battle_action_board(game.board()),
         };
 
         let players = row![
             view_player(
                 Player::P1,
-                self.game[Player::P1],
-                self.game.cur_player() == Player::P1
+                game[Player::P1],
+                game.cur_player() == Player::P1
             ),
             view_player(
                 Player::P2,
-                self.game[Player::P2],
-                self.game.cur_player() == Player::P2
+                game[Player::P2],
+                game.cur_player() == Player::P2
             )
         ]
         .spacing(10)
@@ -117,13 +140,13 @@ impl State {
         let piece_selectors = container(
             column![
                 row![
-                    view_piece_selector(PieceType::Infantry, self),
-                    view_piece_selector(PieceType::Convoy, self)
+                    view_piece_selector(PieceType::Infantry, game, &self.action_mode),
+                    view_piece_selector(PieceType::Convoy, game, &self.action_mode)
                 ]
                 .spacing(5),
                 row![
-                    view_piece_selector(PieceType::Artillery, self),
-                    view_piece_selector(PieceType::Recon, self)
+                    view_piece_selector(PieceType::Artillery, game, &self.action_mode),
+                    view_piece_selector(PieceType::Recon, game, &self.action_mode)
                 ]
                 .spacing(5)
             ]
@@ -295,7 +318,11 @@ fn view_player(player: Player, money: u8, is_current: bool) -> Element<'static, 
         .into()
 }
 
-fn view_piece_selector(piece_type: PieceType, state: &State) -> Element<Message> {
+fn view_piece_selector<'a>(
+    piece_type: PieceType,
+    game: &'a convoy::Game,
+    action_mode: &'a ActionMode,
+) -> Element<'a, Message> {
     const BUTTON_SIZE: u16 = 40;
 
     let selector = button(
@@ -306,20 +333,18 @@ fn view_piece_selector(piece_type: PieceType, state: &State) -> Element<Message>
     .width(BUTTON_SIZE)
     .height(BUTTON_SIZE);
 
-    let ActionMode::Purchase(current_type) = state.action_mode else {
+    let ActionMode::Purchase(current_type) = action_mode else {
         return selector.into();
     };
 
     selector
-        .on_press_maybe(
-            if state.game[state.game.cur_player()] >= piece_type.cost() {
-                Some(Message::ChangePieceType(piece_type))
-            } else {
-                None
-            },
-        )
+        .on_press_maybe(if game[game.cur_player()] >= piece_type.cost() {
+            Some(Message::ChangePieceType(piece_type))
+        } else {
+            None
+        })
         .style(move |theme, status| {
-            if current_type == Some(piece_type) {
+            if current_type == &Some(piece_type) {
                 button::primary(theme, button::Status::Hovered)
             } else {
                 button::primary(theme, status)
