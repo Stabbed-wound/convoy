@@ -189,7 +189,7 @@ fn view_purchase_action_board(board: &Board, player: Player) -> Element<Message>
                 *tile,
                 (row_index + col_index) % 2 == 0,
                 tile.produces_troops(player),
-                tile.produces_troops(player),
+                tile.produces_troops(player) && tile.piece_option.is_none(),
             )
             .map(move |()| Message::TileClicked(row_index, col_index))
         }))
