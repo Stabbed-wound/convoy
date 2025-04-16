@@ -25,7 +25,7 @@ pub enum Message {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ActionMode {
     Move(Option<Coord>),
-    Purchase(PieceType),
+    Purchase(Option<PieceType>),
     Battle,
 }
 
@@ -43,7 +43,10 @@ impl State {
             }
             Message::ChangePieceType(new_type) => {
                 if let ActionMode::Purchase(piece_type) = &mut self.action_mode {
-                    *piece_type = new_type;
+                    match piece_type {
+                        &mut Some(cur_type) if cur_type == new_type => *piece_type = None,
+                        _ => *piece_type = Some(new_type),
+                    }
                 }
             }
             Message::EndTurn => {
@@ -66,12 +69,17 @@ impl State {
                         None => *piece_option = Some(tile_coord),
                     }
                 }
-                &mut ActionMode::Purchase(piece_type) => {
-                    let _ = self.game.do_purchase(
-                        piece_type,
-                        Coord::new(row, col)
-                            .expect("A TileClicked message is always a valid coord"),
-                    );
+                ActionMode::Purchase(piece_opt) => {
+                    if let &mut Some(piece_type) = piece_opt {
+                        let _ = self.game.do_purchase(
+                            piece_type,
+                            Coord::new(row, col)
+                                .expect("A TileClicked message is always a valid coord"),
+                        );
+                        if self.game[self.game.cur_player()] < piece_type.cost() {
+                            *piece_opt = None;
+                        }
+                    }
                 }
                 ActionMode::Battle => {}
             },
@@ -130,7 +138,7 @@ impl State {
                         matches!(self.action_mode, ActionMode::Move(_))
                     ),
                     view_action_selector(
-                        ActionMode::Purchase(PieceType::Infantry),
+                        ActionMode::Purchase(None),
                         matches!(self.action_mode, ActionMode::Purchase(_))
                     )
                 ]
@@ -286,7 +294,7 @@ fn view_piece_selector(piece_type: PieceType, state: &State) -> Element<Message>
             },
         )
         .style(move |theme, status| {
-            if piece_type == current_type {
+            if current_type == Some(piece_type) {
                 button::primary(theme, button::Status::Hovered)
             } else {
                 button::primary(theme, status)
