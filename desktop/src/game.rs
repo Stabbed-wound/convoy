@@ -224,12 +224,7 @@ fn view_tile(tile: Tile, light: bool, selected: bool, enabled: bool) -> Element<
     button(
         text(
             tile.piece_option
-                .map_or("", |piece| match piece.piece_type {
-                    PieceType::Artillery => "A",
-                    PieceType::Convoy => "C",
-                    PieceType::Infantry => "I",
-                    PieceType::Recon => "R",
-                }),
+                .map_or_else(String::new, |piece| piece.piece_type.to_string()),
         )
         .center(),
     )
@@ -271,14 +266,9 @@ fn view_piece_selector(piece_type: PieceType, state: &State) -> Element<Message>
     const BUTTON_SIZE: u16 = 40;
 
     button(
-        text(match piece_type {
-            PieceType::Artillery => "A",
-            PieceType::Convoy => "C",
-            PieceType::Infantry => "I",
-            PieceType::Recon => "R",
-        })
-        .align_x(Horizontal::Center)
-        .align_y(Vertical::Center),
+        text(piece_type.to_string())
+            .align_x(Horizontal::Center)
+            .align_y(Vertical::Center),
     )
     .on_press_maybe(match state.action_mode {
         ActionMode::Purchase(selected)

@@ -1,5 +1,5 @@
 use crate::{board::Board, coord::Coord, Player};
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Deref, RangeInclusive};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -8,6 +8,17 @@ pub enum PieceType {
     Convoy,
     Infantry,
     Recon,
+}
+
+impl Display for PieceType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            Self::Artillery => "A",
+            Self::Convoy => "C",
+            Self::Infantry => "I",
+            Self::Recon => "R",
+        })
+    }
 }
 
 impl PieceType {
