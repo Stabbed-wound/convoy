@@ -20,8 +20,28 @@ impl Board {
     }
 
     #[must_use]
-    pub fn get_moves(&self, piece_coord: Coord) -> Option<Vec<Coord>> {
-        Some(self[piece_coord].piece_option?.get_moves(piece_coord, self))
+    pub fn get_moves(&self, piece: Coord) -> Option<Vec<Coord>> {
+        let _piece = self[piece].piece_option?;
+
+        Some(
+            [
+                Coord::new(piece.rank + 1, piece.file),
+                Coord::new(piece.rank.wrapping_sub(1), piece.file),
+                Coord::new(piece.rank, piece.file + 1),
+                Coord::new(piece.rank, piece.file.wrapping_sub(1)),
+            ]
+            .into_iter()
+            .filter_map(|coord| {
+                coord.and_then(|coord| {
+                    if self[coord].piece_option.is_some() {
+                        None
+                    } else {
+                        Some(coord)
+                    }
+                })
+            })
+            .collect(),
+        )
     }
 
     /// Neighbours are orthogonal only

@@ -1,6 +1,8 @@
-use crate::{board::Board, coord::Coord, Player};
-use std::fmt::{Debug, Display, Formatter};
-use std::ops::{Deref, RangeInclusive};
+use crate::Player;
+use std::{
+    fmt::{Debug, Display, Formatter},
+    ops::{Deref, RangeInclusive},
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PieceType {
@@ -12,12 +14,16 @@ pub enum PieceType {
 
 impl Display for PieceType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            Self::Artillery => "A",
-            Self::Convoy => "C",
-            Self::Infantry => "I",
-            Self::Recon => "R",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Artillery => "A",
+                Self::Convoy => "C",
+                Self::Infantry => "I",
+                Self::Recon => "R",
+            }
+        )
     }
 }
 
@@ -82,10 +88,5 @@ impl Piece {
             exhausted: true,
             piece_type,
         }
-    }
-
-    #[must_use]
-    pub const fn get_moves(&self, Coord { rank: _, file: _ }: Coord, _board: &Board) -> Vec<Coord> {
-        todo!()
     }
 }

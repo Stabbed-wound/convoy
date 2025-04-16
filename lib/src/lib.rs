@@ -121,15 +121,19 @@ impl Game {
     ///
     /// ```
     pub fn do_move(&mut self, Move { from, to }: Move) -> Result<(), MoveError> {
-        let mut piece = self.board[from].piece_option.ok_or(MoveError)?;
-
-        if !piece.get_moves(from, &self.board).contains(&to) {
+        if !self
+            .board
+            .get_moves(from)
+            .is_some_and(|moves| moves.contains(&to))
+        {
             return Err(MoveError);
         }
 
-        piece.exhausted = true;
+        self.board[to].piece_option = self.board[from].piece_option.map(|piece| Piece {
+            exhausted: true,
+            ..piece
+        });
         self.board[from].piece_option = None;
-        self.board[to].piece_option = Some(piece);
 
         Ok(())
     }
